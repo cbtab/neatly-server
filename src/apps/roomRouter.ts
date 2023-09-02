@@ -1,9 +1,7 @@
 import { supabase } from "../utils/db.ts";
 import { Router, Request, Response } from "express";
-
 export const roomRouter = Router();
 
-//@ts-ignore
 roomRouter.get("/", async (req: Request, res: Response) => {
   try {
     const { data, error } = await supabase.from("room_details").select("*");

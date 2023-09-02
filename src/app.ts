@@ -1,7 +1,8 @@
-import express, { Express, Response } from "express";
+import express, { Express, Response, Request } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import { roomRouter } from "./apps/roomRouter.ts";
+import authRouter from "./apps/auth.ts";
 
 const init = async () => {
   const app: Express = express();
@@ -10,13 +11,12 @@ const init = async () => {
   app.use(bodyParser.json());
 
   app.use("/room", roomRouter);
+  app.use("/auth", authRouter);
 
-  // @ts-ignore
   app.get("/", (req: Request, res: Response) => {
     res.send("server is running");
   });
 
-  // @ts-ignore
   app.get("*", (req: Request, res: Response) => {
     res.status(404).send("Not Found");
   });
