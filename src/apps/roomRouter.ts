@@ -4,7 +4,10 @@ export const roomRouter = Router();
 
 roomRouter.get("/", async (req: Request, res: Response) => {
   try {
-    const { data, error } = await supabase.from("room_details").select("*");
+    const { data, error } = await supabase
+      .from("room_details")
+      .select("*")
+      .order("room_id", { ascending: true });
 
     if (error) {
       console.error("Error fetching room:", error);
@@ -56,7 +59,7 @@ roomRouter.post("/", async (req: Request, res: Response) => {
       room_images,
     } = req.body;
 
-    if (!room_type || !description || !price || !bed_types || !amenity) {
+    if (!room_type || !price) {
       return res.status(400).json({
         error:
           "Please enter room type, description, price, bed types,amenity information.",
@@ -72,11 +75,10 @@ roomRouter.post("/", async (req: Request, res: Response) => {
       area,
       amenity,
       room_images,
+      created_at: new Date(),
     };
 
-    const { data, error } = await supabase
-      .from("room_details")
-      .insert([newRoom]);
+    const { error } = await supabase.from("room_details").insert([newRoom]);
 
     if (error) {
       console.error("Error creating room:", error);
@@ -115,9 +117,10 @@ roomRouter.put("/:id", async (req: Request, res: Response) => {
       area,
       amenity,
       room_images,
+      updated_at: new Date(),
     };
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("room_details")
       .update(updatedRoom)
       .eq("room_id", roomId);
@@ -140,7 +143,7 @@ roomRouter.delete("/:id", async (req: Request, res: Response) => {
   try {
     const roomId = req.params.id;
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("room_details")
       .delete()
       .eq("room_id", roomId);
