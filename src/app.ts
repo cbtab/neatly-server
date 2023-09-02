@@ -20,7 +20,7 @@ const init = async () => {
   });
 
   app.listen(port, () => {
-    console.log("server is running");
+    console.log(`server is running port ${port}`);
   });
 };
 
