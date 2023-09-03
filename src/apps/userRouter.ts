@@ -52,15 +52,15 @@ userRouter.put("/:id", async (req: Request, res: Response) => {
       .eq("id", userId)
       .select();
 
-    if (!data || data.length === 0) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
     if (error) {
       console.error("Error updating profile:", error);
       return res
         .status(500)
         .json({ error: "An error occurred while updating profile." });
+    }
+
+    if (!data || data.length === 0) {
+      return res.status(404).json({ error: "User not found" });
     }
 
     res
