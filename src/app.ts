@@ -2,7 +2,7 @@ import express, { Express, Response, Request } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import { roomRouter } from "./apps/roomRouter.ts";
-import { userRouter } from "./apps/userRouter.ts";
+import { profileRouter } from "./apps/ProfileRouter.ts";
 import authRouter from "./apps/auth.ts";
 
 const init = async () => {
@@ -13,7 +13,7 @@ const init = async () => {
 
   app.use("/room", roomRouter);
   app.use("/auth", authRouter);
-  app.use("/user", userRouter);
+  app.use("/profile", profileRouter);
 
   app.get("/", (req: Request, res: Response) => {
     res.send("server is running");
