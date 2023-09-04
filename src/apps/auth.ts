@@ -7,34 +7,28 @@ import multer from "multer";
 
 const authRouter = Router();
 
+authRouter.post("/register", async (req, res) => {
+
 const multerUpload = multer({ dest: "uploads/" });
 const avatarUpload = multerUpload.fields([{ name: "avatar", maxCount: 1 }]);
-
-authRouter.post("/register", avatarUpload, async (req, res) => {
-  const user = {
-    username: req.body.username,
-    password: req.body.password,
-    user_full_name: req.body.user_full_name,
-    email: req.body.email,
-  };
 
   //@ts-ignore
   const avatarUrl = await supabaseUpload(req.files);
 
   const salt = await bcrypt.genSalt(10);
-  // now we set user password to hashed password
-  user.password = await bcrypt.hash(user.password, salt);
+  req.body.password = await bcrypt.hash(req.body.password, salt);
 
-  console.log("Password:", user.password);
-  console.log("Username:", user.username);
   console.log("Salt:", salt);
 
   await supabase.from("users").insert([
     {
-      username: user.username,
-      password: user.password,
-      user_full_name: user.user_full_name,
-      email: user.email,
+      username: req.body.username,
+      password: req.body.password,
+      fullName: req.body.fullName,
+      email: req.body.email,
+      birth_day: req.body.birthDay,
+      country: req.body.country,
+      idNumber: req.body.idNumber,
       profile_image: avatarUrl,
     },
   ]);
