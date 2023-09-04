@@ -7,7 +7,7 @@ const supabaseUpload = async (files: any) => {
   for (let file of files) {
     try {
       const { data, error } = await supabase.storage
-        .from("user-storage")
+        .from("user-storage/profile-pictures")
         .upload(`avatar_${Date.now()}`, files);
 
       if (error) {
