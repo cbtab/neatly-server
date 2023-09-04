@@ -2,18 +2,18 @@ import { Router } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { supabase } from "../utils/db.ts";
-import { supabaseUpload } from "../utils/upload.ts";
+// import { supabaseUpload } from "../utils/upload.ts";
 import multer from "multer";
 
 const authRouter = Router();
 
+// const multerUpload = multer({ dest: "uploads/" });
+// const avatarUpload = multerUpload.fields([{ name: "avatar", maxCount: 1 }]);
+
+// authRouter.post("/register", avatarUpload async (req, res) =>
 authRouter.post("/register", async (req, res) => {
-
-const multerUpload = multer({ dest: "uploads/" });
-const avatarUpload = multerUpload.fields([{ name: "avatar", maxCount: 1 }]);
-
   //@ts-ignore
-  const avatarUrl = await supabaseUpload(req.files);
+  // const avatarUrl = await supabaseUpload(req.files);
 
   const salt = await bcrypt.genSalt(10);
   req.body.password = await bcrypt.hash(req.body.password, salt);
@@ -29,7 +29,7 @@ const avatarUpload = multerUpload.fields([{ name: "avatar", maxCount: 1 }]);
       birth_day: req.body.birthDay,
       country: req.body.country,
       idNumber: req.body.idNumber,
-      profile_image: avatarUrl,
+      // profile_image: avatarUrl,
     },
   ]);
 
