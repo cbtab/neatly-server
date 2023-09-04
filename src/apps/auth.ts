@@ -2,16 +2,24 @@ import { Router } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { supabase } from "../utils/db.ts";
+import { supabaseUpload } from "../utils/upload.ts";
+import multer from "multer";
 
 const authRouter = Router();
 
-authRouter.post("/register", async (req, res) => {
+const multerUpload = multer({ dest: "uploads/" });
+const avatarUpload = multerUpload.fields([{ name: "avatar", maxCount: 1 }]);
+
+authRouter.post("/register", avatarUpload, async (req, res) => {
   const user = {
     username: req.body.username,
     password: req.body.password,
     user_full_name: req.body.user_full_name,
     email: req.body.email,
   };
+
+  //@ts-ignore
+  const avatarUrl = await supabaseUpload(req.files);
 
   const salt = await bcrypt.genSalt(10);
   // now we set user password to hashed password
@@ -27,6 +35,7 @@ authRouter.post("/register", async (req, res) => {
       password: user.password,
       user_full_name: user.user_full_name,
       email: user.email,
+      profile_image: avatarUrl,
     },
   ]);
 
