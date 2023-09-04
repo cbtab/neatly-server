@@ -1,8 +1,8 @@
 import { supabase } from "../utils/db.ts";
 import { Router, Request, Response } from "express";
-export const userRouter = Router();
+export const profileRouter = Router();
 
-userRouter.get("/:id", async (req: Request, res: Response) => {
+profileRouter.get("/:id", async (req: Request, res: Response) => {
   try {
     const userId = req.params.id;
     const { data: user, error } = await supabase
@@ -32,7 +32,7 @@ userRouter.get("/:id", async (req: Request, res: Response) => {
   }
 });
 
-userRouter.put("/:id", async (req: Request, res: Response) => {
+profileRouter.put("/:id", async (req: Request, res: Response) => {
   try {
     const userId = req.params.id;
     const {
@@ -80,7 +80,7 @@ userRouter.put("/:id", async (req: Request, res: Response) => {
   }
 });
 
-userRouter.delete("/:id", async (req: Request, res: Response) => {
+profileRouter.delete("/:id", async (req: Request, res: Response) => {
   try {
     const userId = req.params.id;
 
