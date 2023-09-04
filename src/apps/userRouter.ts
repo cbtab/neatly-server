@@ -35,7 +35,14 @@ userRouter.get("/:id", async (req: Request, res: Response) => {
 userRouter.put("/:id", async (req: Request, res: Response) => {
   try {
     const userId = req.params.id;
-    const { user_full_name, email, Id_card, birth_day, country } = req.body;
+    const {
+      user_full_name,
+      email,
+      Id_card,
+      birth_day,
+      country,
+      profile_image,
+    } = req.body;
 
     const updatedUserProfile = {
       user_full_name,
@@ -43,6 +50,7 @@ userRouter.put("/:id", async (req: Request, res: Response) => {
       Id_card,
       birth_day,
       country,
+      profile_image,
       updated_at: new Date(),
     };
 
@@ -66,6 +74,30 @@ userRouter.put("/:id", async (req: Request, res: Response) => {
     res
       .status(200)
       .json({ message: "User profile has been updated successfully", data });
+  } catch (err) {
+    console.error("Internal server error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+userRouter.delete("/:id", async (req: Request, res: Response) => {
+  try {
+    const userId = req.params.id;
+
+    const { error } = await supabase
+      .from("users")
+      .update({ profile_image: null })
+      .eq("id", userId);
+    if (error) {
+      console.error("Error deleting profile image:", error);
+      return res
+        .status(500)
+        .json({ error: "An error occurred while deleting the profile image." });
+    }
+
+    res.status(200).json({
+      message: "Profile image has been deleted successfully",
+    });
   } catch (err) {
     console.error("Internal server error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
