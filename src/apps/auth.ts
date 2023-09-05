@@ -34,12 +34,12 @@ authRouter.post("/register", avatarUpload, async (req, res) => {
           birthDate: req.body.birth_day,
           country: req.body.country,
           idNumber: req.body.idNumber,
-          // profile_image: avatarUrl,
+          profile_image: avatarUrl,
         },
       ],
       { defaultToNull: false }
     );
-  console.log(req.body);
+
   //get ID
   let { data: users, error } = await supabase
     .from("users")
@@ -76,7 +76,7 @@ authRouter.post("/register", avatarUpload, async (req, res) => {
     .select("credit_card_id")
     .eq("user_id", user_id);
   const card_id = creditCard[0].credit_card_id;
-  console.log(card_id);
+
   if (errorCreditCard) {
     return res.status(500).json({
       message: "Error creating user",
