@@ -1,15 +1,18 @@
 import { supabase } from "./db";
 import { promises as fs } from "fs";
+import { v4 as uuidv4 } from "uuid";
 
-const supabaseUpload = async (files) => {
+const supabaseUpload = async (files: any) => {
   const fileUrls = [];
-
+  console.log(files);
+  //@ts-ignore
   for (let file of files.avatar) {
     try {
       const { data, error } = await supabase.storage
         .from("user-storage")
-        .upload("profile-pictures/" + `avatar_${Date.now()}`, file);
-
+        .upload("profile-pictures/" + `avatar_${uuidv4()}`, file, {
+          contentType: "image/jpeg",
+        });
       if (error) {
         console.error("Error uploading file:", error);
         continue;
@@ -17,7 +20,7 @@ const supabaseUpload = async (files) => {
 
       const fileUrl = supabase.storage
         .from("user-storage")
-        .getPublicUrl("profile-pictures/" + `avatar_${Date.now()}`);
+        .getPublicUrl(data.path);
 
       fileUrls.push(fileUrl.data.publicUrl);
 
