@@ -9,7 +9,7 @@ const supabaseUpload = async (files: any) => {
       const { data, error } = await supabase.storage
         .from("user-storage")
         .upload("profile-pictures/" + `avatar_${uuidv4()}`, file.buffer, {
-          contentType: "image/jpeg",
+          contentType: file.mimetype,
         });
       if (error) {
         console.error("Error uploading file:", error);
