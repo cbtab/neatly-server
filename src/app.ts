@@ -4,6 +4,7 @@ import bodyParser from "body-parser";
 import { roomRouter } from "./apps/roomRouter.ts";
 import { profileRouter } from "./apps/ProfileRouter.ts";
 import authRouter from "./apps/auth.ts";
+import { validUser } from "./apps/validUser.ts";
 // import { supabase } from "./utils/db.ts";
 // import multer from "multer";
 
@@ -19,6 +20,7 @@ const init = async () => {
   app.use("/room", roomRouter);
   app.use("/auth", authRouter);
   app.use("/profile", profileRouter);
+  app.use("/validUser", validUser);
 
   // app.post("/upload", upload.single("file"), async (req, res) => {
   //   try {

@@ -22,19 +22,72 @@ authRouter.post("/register", avatarUpload, async (req, res) => {
   const salt = await bcrypt.genSalt(10);
   req.body.password = await bcrypt.hash(req.body.password, salt);
 
-  console.log("Salt:", salt);
-  -(await supabase.from("users").insert([
-    {
-      username: req.body.username,
-      password: req.body.password,
-      fullName: req.body.fullName,
-      email: req.body.email,
-      birth_day: req.body.birthDay,
-      country: req.body.country,
-      idNumber: req.body.idNumber,
-      profile_image: avatarUrl,
-    },
-  ]));
+  const { data: userData, error: userError } = await supabase
+    .from("users")
+    .insert(
+      [
+        {
+          username: req.body.username,
+          password: req.body.password,
+          fullName: req.body.fullName,
+          email: req.body.email,
+          birthDate: req.body.birth_day,
+          country: req.body.country,
+          idNumber: req.body.idNumber,
+          // profile_image: avatarUrl,
+        },
+      ],
+      { defaultToNull: false }
+    );
+  console.log(req.body);
+  //get ID
+  let { data: users, error } = await supabase
+    .from("users")
+    .select("id")
+    .eq("username", req.body.username);
+  const user_id = users[0].id;
+  console.log(user_id);
+  if (userError) {
+    return res.status(500).json({
+      message: "Error creating user",
+      error: userError,
+    });
+  }
+
+  const { data: data, error: dataError } = await supabase
+    .from("credit_card")
+    .insert([
+      {
+        expire_date: req.body.expireDate,
+        cvc: req.body.cvc,
+        user_id: user_id,
+        card_owner: req.body.card_owner,
+        card_number: req.body.card_number,
+      },
+    ]);
+  if (dataError) {
+    return res.status(500).json({
+      message: "Error creating credit card",
+      error: dataError,
+    });
+  }
+  let { data: creditCard, error: errorCreditCard } = await supabase
+    .from("credit_card")
+    .select("credit_card_id")
+    .eq("user_id", user_id);
+  const card_id = creditCard[0].credit_card_id;
+  console.log(card_id);
+  if (errorCreditCard) {
+    return res.status(500).json({
+      message: "Error creating user",
+      error: errorCreditCard,
+    });
+  }
+
+  const { data: updateCard, error: updateCardError } = await supabase
+    .from("users")
+    .update({ credit_card_id: card_id })
+    .eq("id", user_id);
 
   return res.json({
     message: "User has been created successfully",
