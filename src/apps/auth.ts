@@ -7,17 +7,16 @@ import multer from "multer";
 
 const authRouter = Router();
 
-const multerUpload = multer({ dest: "uploads/" });
-const avatarUpload = multerUpload.fields([{ name: "avatar", maxCount: 1 }]);
+const multerUpload = multer({ storage: multer.memoryStorage() });
+const avatarUpload = multerUpload.fields([{ name: "avatar" }]);
 
 authRouter.post("/register", avatarUpload, async (req, res) => {
   let avatarUrl = "";
 
-  //@ts-ignore
+  // @ts-ignore
   if (req.files && req.files.avatar) {
     //@ts-ignore
     avatarUrl = await supabaseUpload(req.files);
-    console.log(req.files);
   }
 
   const salt = await bcrypt.genSalt(10);
