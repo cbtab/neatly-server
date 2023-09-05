@@ -2,7 +2,7 @@ import { supabase } from "./db";
 import { v4 as uuidv4 } from "uuid";
 
 const supabaseUpload = async (files: any) => {
-  const fileUrls = [];
+  let fileUrls = "";
 
   for (let file of files.avatar) {
     try {
@@ -20,7 +20,7 @@ const supabaseUpload = async (files: any) => {
         .from("user-storage")
         .getPublicUrl(data.path);
 
-      fileUrls.push(fileUrl.data.publicUrl);
+      fileUrls = fileUrl.data.publicUrl;
     } catch (error) {
       console.error("Error processing file:", error);
     }
