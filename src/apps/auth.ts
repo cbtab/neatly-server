@@ -95,36 +95,51 @@ authRouter.post("/register", avatarUpload, async (req, res) => {
 });
 
 authRouter.post("/login", async (req, res) => {
-  const email = req.body.email;
-  let { data: users, error } = await supabase
-    .from("users")
-    .select("*")
-    .eq("email", email)
-    .single();
+  const loginIdentifier = req.body.loginIdentifier;
+  const password = req.body.password;
 
-  if (!users) {
+  const isEmail = /\S+@\S+\.\S+/.test(loginIdentifier);
+
+  let user;
+
+  if (isEmail) {
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", loginIdentifier)
+      .single();
+
+    user = data;
+  } else {
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("username", loginIdentifier)
+      .single();
+
+    user = data;
+  }
+
+  if (!user) {
     return res.status(404).json({
-      message: "user not found",
+      message: "User not found",
     });
   }
 
-  const isValidPassword = await bcrypt.compare(
-    req.body.password,
-    users.password
-  );
+  const isValidPassword = await bcrypt.compare(password, user.password);
 
   if (!isValidPassword) {
     return res.status(400).json({
-      message: "password not valid",
+      message: "Password not valid",
     });
   }
 
-  const token = jwt.sign({ email: users.email }, `${process.env.SECRET_KEY}`, {
+  const token = jwt.sign({ email: user.email }, `${process.env.SECRET_KEY}`, {
     expiresIn: "900000",
   });
 
-  return res.json({
-    message: "login succesfully",
+  return res.status(200).json({
+    message: "Login successful",
     token,
   });
 });
