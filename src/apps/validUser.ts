@@ -36,3 +36,20 @@ validUser.get("/email", async (req, res) => {
     data: users,
   });
 });
+
+validUser.get("/idNumber", async (req, res) => {
+  const { idNumber } = req.query;
+
+  // Use the username to query the database
+  let { data: users, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("idNumber", idNumber);
+
+  console.log(idNumber);
+  console.log(users);
+
+  return res.json({
+    data: users,
+  });
+});
