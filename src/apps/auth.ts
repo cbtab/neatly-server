@@ -27,6 +27,12 @@ const validateRegistrationData = (req, res, next) => {
     });
   }
 
+  if (!country) {
+    return res.status(400).json({
+      error: "Please select your country.",
+    });
+  }
+
   const names = fullName.trim().split(" ");
   if (
     names.length !== 2 ||
@@ -78,7 +84,7 @@ authRouter.post(
   avatarUpload,
   validateRegistrationData,
   async (req, res) => {
-    let avatarUrl = "";
+    let avatarUrl = null;
 
     // @ts-ignore
     if (req.files && req.files.avatar) {
@@ -112,6 +118,13 @@ authRouter.post(
       .from("users")
       .select("id")
       .eq("username", req.body.username);
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
     const user_id = users[0].id;
     console.log(user_id);
     if (userError) {
