@@ -11,7 +11,8 @@ const multerUpload = multer({ storage: multer.memoryStorage() });
 const avatarUpload = multerUpload.fields([{ name: "avatar" }]);
 
 const validateRegistrationData = (req, res, next) => {
-  const { fullName, password, email, birth_day, country, idNumber } = req.body;
+  const { fullName, password, email, birth_day, country, idNumber, cardOwner } =
+    req.body;
 
   if (password.length < 6) {
     return res.status(400).json({
@@ -28,6 +29,18 @@ const validateRegistrationData = (req, res, next) => {
     return res.status(400).json({
       error:
         "Invalid full name. It should include both the first name and last name without numbers.",
+    });
+  }
+
+  const cardNames = cardOwner.trim().split(" ");
+  if (
+    cardNames.length !== 2 ||
+    !/^[a-zA-Z]*$/.test(cardNames[0]) ||
+    !/^[a-zA-Z]*$/.test(cardNames[1])
+  ) {
+    return res.status(400).json({
+      error:
+        "Invalid card name. It should include both the first name and last name without numbers.",
     });
   }
 
