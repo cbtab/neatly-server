@@ -11,8 +11,15 @@ const multerUpload = multer({ storage: multer.memoryStorage() });
 const avatarUpload = multerUpload.fields([{ name: "avatar" }]);
 
 const validateRegistrationData = (req, res, next) => {
-  const { fullName, password, email, birth_day, country, idNumber, cardOwner } =
-    req.body;
+  const {
+    fullName,
+    password,
+    email,
+    birth_day,
+    country,
+    idNumber,
+    card_owner,
+  } = req.body;
 
   if (password.length < 6) {
     return res.status(400).json({
@@ -32,7 +39,7 @@ const validateRegistrationData = (req, res, next) => {
     });
   }
 
-  const cardNames = cardOwner.trim().split(" ");
+  const cardNames = card_owner.trim().split(" ");
   if (
     cardNames.length !== 2 ||
     !/^[a-zA-Z]*$/.test(cardNames[0]) ||
