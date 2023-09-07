@@ -112,6 +112,13 @@ authRouter.post(
       .from("users")
       .select("id")
       .eq("username", req.body.username);
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
     const user_id = users[0].id;
     console.log(user_id);
     if (userError) {
