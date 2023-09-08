@@ -2,8 +2,7 @@ import jwt from "jsonwebtoken";
 import { Request, Response } from "express";
 
 export const protect = async (req: Request, res: Response, next) => {
-  const token = req.headers.authorization;
-
+  const token = req.body.token;
   if (!token || !token.startsWith("Bearer ")) {
     return res.status(401).json({
       message: "Token has invalid format",

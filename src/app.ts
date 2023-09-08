@@ -5,6 +5,7 @@ import { roomRouter } from "./apps/roomRouter.ts";
 import { profileRouter } from "./apps/ProfileRouter.ts";
 import authRouter from "./apps/auth.ts";
 import { validUser } from "./apps/validUser.ts";
+import { protect } from "./middlewares/protect.ts";
 // import { supabase } from "./utils/db.ts";
 // import multer from "multer";
 
@@ -14,9 +15,10 @@ import { validUser } from "./apps/validUser.ts";
 const init = async () => {
   const app: Express = express();
   const port = 4000;
+
   app.use(cors());
   app.use(bodyParser.json());
-
+  // app.use("/", protect);
   app.use("/room", roomRouter);
   app.use("/auth", authRouter);
   app.use("/profile", profileRouter);
