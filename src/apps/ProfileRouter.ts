@@ -35,20 +35,14 @@ profileRouter.get("/:id", async (req: Request, res: Response) => {
 profileRouter.put("/:id", async (req: Request, res: Response) => {
   try {
     const userId = req.params.id;
-    const {
-      user_full_name,
-      email,
-      Id_card,
-      birth_day,
-      country,
-      profile_image,
-    } = req.body;
+    const { fullName, email, idNumber, birthDate, country, profile_image } =
+      req.body;
 
     const updatedUserProfile = {
-      user_full_name,
+      fullName,
       email,
-      Id_card,
-      birth_day,
+      idNumber,
+      birthDate,
       country,
       profile_image,
       updated_at: new Date(),
@@ -98,6 +92,34 @@ profileRouter.delete("/:id", async (req: Request, res: Response) => {
     res.status(200).json({
       message: "Profile image has been deleted successfully",
     });
+  } catch (err) {
+    console.error("Internal server error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+profileRouter.post("/:id", async (req: Request, res: Response) => {
+  try {
+    const userId = req.params.id;
+    const { profile_image } = req.body;
+
+    const newProfileImage = {
+      user_id: userId,
+      profile_image,
+      created_at: new Date(),
+    };
+
+    const { error } = await supabase.from("users").insert([newProfileImage]);
+    if (error) {
+      console.error("Error creating profile image:", error);
+      return res
+        .status(500)
+        .json({ error: "An error occurred while creating profile image." });
+    }
+
+    res
+      .status(201)
+      .json({ message: "Profile image has been created successfully" });
   } catch (err) {
     console.error("Internal server error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
