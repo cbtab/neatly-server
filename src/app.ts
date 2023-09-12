@@ -2,11 +2,12 @@ import express, { Express, Response, Request } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import { roomRouter } from "./apps/roomRouter.ts";
-import { profileRouter } from "./apps/profileRouter.ts";
+import { profileRouter } from "./apps/ProfileRouter.ts";
 import { paymentMethodRouter } from "./apps/paymentMethodRouter.ts";
 import authRouter from "./apps/auth.ts";
 import { validUser } from "./apps/validUser.ts";
 import { protect } from "./middlewares/protect.ts";
+import { bookingRouter } from "./apps/bookingRouter.ts";
 // import { supabase } from "./utils/db.ts";
 // import multer from "multer";
 
@@ -25,6 +26,7 @@ const init = async () => {
   app.use("/profile", profileRouter);
   app.use("/paymentMethod", paymentMethodRouter);
   app.use("/validUser", validUser);
+  app.use("/booking", bookingRouter);
 
   // app.post("/upload", upload.single("file"), async (req, res) => {
   //   try {
