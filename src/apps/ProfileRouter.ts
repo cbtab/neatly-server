@@ -39,16 +39,18 @@ profileRouter.get("/:id", async (req: Request, res: Response) => {
 });
 
 profileRouter.put("/:id", avatarUpload, async (req: Request, res: Response) => {
-  let avatarUrl = [];
+  let avatarUrl;
   // @ts-ignore
   if (req.files && req.files.avatar) {
     //@ts-ignore
     avatarUrl = await supabaseUpload(req.files);
+  } else {
+    avatarUrl = req.body.profile_image;
   }
+
   try {
     const userId = req.params.id;
-    const { fullName, email, idNumber, birthDate, country, profile_image } =
-      req.body;
+    const { fullName, email, idNumber, birthDate, country } = req.body;
 
     const updatedUserProfile = {
       fullName,
