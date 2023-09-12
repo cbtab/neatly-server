@@ -1,6 +1,12 @@
 import { supabase } from "../utils/db.ts";
 import { Router, Request, Response } from "express";
+import multer from "multer";
+import { supabaseUpload } from "../utils/upload.ts";
+
 export const profileRouter = Router();
+
+const multerUpload = multer({ storage: multer.memoryStorage() });
+const avatarUpload = multerUpload.fields([{ name: "avatar" }]);
 
 profileRouter.get("/:id", async (req: Request, res: Response) => {
   try {
@@ -32,11 +38,19 @@ profileRouter.get("/:id", async (req: Request, res: Response) => {
   }
 });
 
-profileRouter.put("/:id", async (req: Request, res: Response) => {
+profileRouter.put("/:id", avatarUpload, async (req: Request, res: Response) => {
+  let avatarUrl;
+  // @ts-ignore
+  if (req.files && req.files.avatar) {
+    //@ts-ignore
+    avatarUrl = await supabaseUpload(req.files);
+  } else {
+    avatarUrl = req.body.profile_image;
+  }
+
   try {
     const userId = req.params.id;
-    const { fullName, email, idNumber, birthDate, country, profile_image } =
-      req.body;
+    const { fullName, email, idNumber, birthDate, country } = req.body;
 
     const updatedUserProfile = {
       fullName,
@@ -44,7 +58,7 @@ profileRouter.put("/:id", async (req: Request, res: Response) => {
       idNumber,
       birthDate,
       country,
-      profile_image,
+      profile_image: avatarUrl,
       updated_at: new Date(),
     };
 
@@ -92,34 +106,6 @@ profileRouter.delete("/:id", async (req: Request, res: Response) => {
     res.status(200).json({
       message: "Profile image has been deleted successfully",
     });
-  } catch (err) {
-    console.error("Internal server error:", err);
-    res.status(500).json({ error: "An internal server error occurred." });
-  }
-});
-
-profileRouter.post("/:id", async (req: Request, res: Response) => {
-  try {
-    const userId = req.params.id;
-    const { profile_image } = req.body;
-
-    const newProfileImage = {
-      user_id: userId,
-      profile_image,
-      created_at: new Date(),
-    };
-
-    const { error } = await supabase.from("users").insert([newProfileImage]);
-    if (error) {
-      console.error("Error creating profile image:", error);
-      return res
-        .status(500)
-        .json({ error: "An error occurred while creating profile image." });
-    }
-
-    res
-      .status(201)
-      .json({ message: "Profile image has been created successfully" });
   } catch (err) {
     console.error("Internal server error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
