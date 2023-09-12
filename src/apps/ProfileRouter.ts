@@ -1,6 +1,12 @@
 import { supabase } from "../utils/db.ts";
 import { Router, Request, Response } from "express";
+import multer from "multer";
+import { supabaseUpload } from "../utils/upload.ts";
+
 export const profileRouter = Router();
+
+const multerUpload = multer({ storage: multer.memoryStorage() });
+const avatarUpload = multerUpload.fields([{ name: "avatar" }]);
 
 profileRouter.get("/:id", async (req: Request, res: Response) => {
   try {
@@ -32,25 +38,27 @@ profileRouter.get("/:id", async (req: Request, res: Response) => {
   }
 });
 
-profileRouter.put("/:id", async (req: Request, res: Response) => {
+profileRouter.put("/:id", avatarUpload, async (req: Request, res: Response) => {
+  let avatarUrl;
+  // @ts-ignore
+  if (req.files && req.files.avatar) {
+    //@ts-ignore
+    avatarUrl = await supabaseUpload(req.files);
+  } else {
+    avatarUrl = req.body.profile_image;
+  }
+
   try {
     const userId = req.params.id;
-    const {
-      user_full_name,
-      email,
-      Id_card,
-      birth_day,
-      country,
-      profile_image,
-    } = req.body;
+    const { fullName, email, idNumber, birthDate, country } = req.body;
 
     const updatedUserProfile = {
-      user_full_name,
+      fullName,
       email,
-      Id_card,
-      birth_day,
+      idNumber,
+      birthDate,
       country,
-      profile_image,
+      profile_image: avatarUrl,
       updated_at: new Date(),
     };
 
