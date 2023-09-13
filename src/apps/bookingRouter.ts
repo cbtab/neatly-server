@@ -56,6 +56,11 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
       room_id,
       user_id,
       total_price,
+      standard_request,
+      special_request,
+      additional_request,
+      avaliable,
+      room_avaliable_id,
     } = req.body;
 
     const newBooking = {
@@ -66,22 +71,43 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
       room_id,
       user_id,
       total_price,
+      standard_request,
+      special_request,
+      additional_request,
+      room_avaliable_id,
       booking_date: new Date(),
     };
 
-    const { error } = await supabase.from("booking").insert([newBooking]);
+    const newAvailability = {
+      check_in,
+      check_out,
+      avaliable,
+      user_id,
+    };
 
-    if (error) {
-      console.error("Error creating booking:", error);
-      return res
+    const { error: bookingError } = await supabase
+      .from("booking")
+      .insert([newBooking]);
+
+    const { error: availabilityError } = await supabase
+      .from("room_avaliable")
+      .update([newAvailability])
+      .eq("room_avaliable_id", room_avaliable_id);
+
+    if (bookingError || availabilityError) {
+      console.error(
+        "Error inserting data into the database:",
+        bookingError || availabilityError
+      );
+      res
         .status(500)
-        .json({ error: "An error occurred while creating booking." });
+        .json({ error: "Failed to insert data into the database" });
+    } else {
+      res.status(200).json({ message: "Data inserted successfully" });
     }
-
-    res.status(201).json({ message: "user has been booking successfully" });
-  } catch (err) {
-    console.error("Internal server error:", err);
-    res.status(500).json({ error: "An internal server error occurred." });
+  } catch (error) {
+    console.error("An unexpected error occurred:", error);
+    res.status(500).json({ error: "An unexpected error occurred" });
   }
 });
 
@@ -96,6 +122,11 @@ bookingRouter.put("/:id", async (req: Request, res: Response) => {
       room_id,
       user_id,
       total_price,
+      standard_request,
+      special_request,
+      additional_request,
+      avaliable,
+      room_avaliable_id,
     } = req.body;
 
     const updatedBooking = {
@@ -106,24 +137,43 @@ bookingRouter.put("/:id", async (req: Request, res: Response) => {
       room_id,
       user_id,
       total_price,
+      standard_request,
+      special_request,
+      additional_request,
       update_booking_date: new Date(),
     };
 
-    const { error } = await supabase
+    const updatedAvailability = {
+      check_in,
+      check_out,
+      avaliable,
+      user_id,
+    };
+
+    const { error: bookingError } = await supabase
       .from("booking")
-      .update(updatedBooking)
+      .update([updatedBooking])
       .eq("book_id", bookingId);
 
-    if (error) {
-      console.error("Error updating booking:", error);
-      return res
-        .status(500)
-        .json({ error: "An error occurred while updating booking." });
+    const { error: availabilityError } = await supabase
+      .from("room_avaliable")
+      .update([updatedAvailability])
+      .eq("room_avaliable_id", room_avaliable_id);
+
+    if (bookingError || availabilityError) {
+      console.error(
+        "Error updating booking or availability:",
+        bookingError,
+        availabilityError
+      );
+      return res.status(500).json({
+        error: "An error occurred while updating booking or availability.",
+      });
     }
 
-    res
-      .status(202)
-      .json({ message: "user has been update booking successfully" });
+    res.status(202).json({
+      message: "Booking and availability have been updated successfully.",
+    });
   } catch (err) {
     console.error("Internal server error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
