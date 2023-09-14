@@ -58,13 +58,12 @@ validUser.get("/:userid", async (req, res) => {
   const id = req.params.userid;
 
   // Use the username to query the database
-  let { data: user, error } = await supabase
+  let { data: userData, error } = await supabase
     .from("users")
     .select("*")
     .eq("id", id);
-  console.log(user);
 
   return res.json({
-    data: user,
+    data: userData,
   });
 });
