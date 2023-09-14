@@ -15,8 +15,14 @@ roomRouter.get("/", async (req: Request, res: Response) => {
         .status(500)
         .json({ error: "An error occurred while fetching room." });
     }
+    const { data: roomAvaliable, error: roomAvaliableError } = await supabase
+      .from("room_avaliable")
+      .select("*");
 
-    res.json({ data });
+    return res.json({
+      data,
+      roomAvaliable,
+    });
   } catch (err) {
     console.error("Internal server error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
