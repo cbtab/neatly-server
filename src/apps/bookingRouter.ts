@@ -46,6 +46,28 @@ bookingRouter.get("/:id", async (req: Request, res: Response) => {
   }
 });
 
+bookingRouter.get("/user/:userId", async (req: Request, res: Response) => {
+  try {
+    const user_id = req.params.userId;
+    const { data: bookingDetails, error } = await supabase
+      .from("booking")
+      .select("*")
+      .eq("user_id", user_id);
+
+    if (error) {
+      console.error("Error fetching booking:", error);
+      return res
+        .status(500)
+        .json({ error: "An error occurred while fetching booking." });
+    }
+
+    res.json({ data: bookingDetails });
+  } catch (err) {
+    console.error("Internal server error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
 bookingRouter.post("/", async (req: Request, res: Response) => {
   try {
     const {
