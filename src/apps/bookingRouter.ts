@@ -23,13 +23,14 @@ bookingRouter.get("/", async (req: Request, res: Response) => {
   }
 });
 
-bookingRouter.get("/:userId", async (req: Request, res: Response) => {
+bookingRouter.get("/:id", async (req: Request, res: Response) => {
   try {
-    const userId = req.params.userId;
+    const bookingId = req.params.id;
     const { data: bookingDetails, error } = await supabase
       .from("booking")
       .select("*")
-      .eq("user_id", userId);
+      .eq("book_id", bookingId)
+      .single();
 
     if (error) {
       console.error("Error fetching booking:", error);
