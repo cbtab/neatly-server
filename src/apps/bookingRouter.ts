@@ -6,7 +6,7 @@ bookingRouter.get("/", async (req: Request, res: Response) => {
   try {
     const { data, error } = await supabase
       .from("booking")
-      .select("*, credit_card(*)")
+      .select("*")
       .order("book_id", { ascending: true });
 
     if (error) {
