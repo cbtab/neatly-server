@@ -6,7 +6,7 @@ bookingRouter.get("/", async (req: Request, res: Response) => {
   try {
     const { data, error } = await supabase
       .from("booking")
-      .select("*")
+      .select("*, credit_card(*)")
       .order("book_id", { ascending: true });
 
     if (error) {
@@ -83,6 +83,7 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
       additional_request,
       avaliable,
       room_avaliable_id,
+      credit_card_id,
     } = req.body;
 
     const newBooking = {
@@ -97,6 +98,7 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
       special_request,
       additional_request,
       room_avaliable_id,
+      credit_card_id,
       booking_date: new Date(),
     };
 
