@@ -109,7 +109,7 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
     const newAvailability = {
       check_in,
       check_out,
-      avaliable,
+      avaliable: true,
       user_id,
       status: "Unavaliable",
     };
