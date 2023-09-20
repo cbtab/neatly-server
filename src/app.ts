@@ -7,6 +7,7 @@ import { paymentMethodRouter } from "./apps/paymentMethodRouter.ts";
 import authRouter from "./apps/auth.ts";
 import { validUser } from "./apps/validUser.ts";
 import { protect } from "./middlewares/protect.ts";
+import { payment } from "./apps/payment.ts";
 import { bookingRouter } from "./apps/bookingRouter.ts";
 import { roomAvaliable } from "./apps/roomAvaliable.ts";
 // import { supabase } from "./utils/db.ts";
@@ -29,6 +30,7 @@ const init = async () => {
   app.use("/validUser", validUser);
   app.use("/booking", bookingRouter);
   app.use("/avaliable", roomAvaliable);
+  app.use("/checkout", payment);
 
   // app.post("/upload", upload.single("file"), async (req, res) => {
   //   try {
