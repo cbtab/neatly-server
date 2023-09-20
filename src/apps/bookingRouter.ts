@@ -83,7 +83,6 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
       additional_request,
       avaliable,
       room_avaliable_id,
-      credit_card_id,
       three_credit_card_num,
       payment_method,
     } = req.body;
@@ -100,7 +99,6 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
       special_request,
       additional_request,
       room_avaliable_id,
-      credit_card_id,
       three_credit_card_num,
       payment_method,
       booking_date: new Date(),
