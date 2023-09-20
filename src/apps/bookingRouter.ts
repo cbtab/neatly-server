@@ -165,6 +165,7 @@ bookingRouter.put("/:id", async (req: Request, res: Response) => {
       standard_request,
       special_request,
       additional_request,
+      cancel_date: new Date(),
       update_booking_date: new Date(),
     };
 
