@@ -33,3 +33,27 @@ roomAvaliable.get("/", async (req: Request, res: Response) => {
     res.status(500).json({ error: "An internal server error occurred." });
   }
 });
+
+roomAvaliable.get("/:roomId", async (req, res) => {
+  const room_id = req.params.roomId;
+
+  try {
+    const { data: roomAvaliable, error } = await supabase
+      .from("room_avaliable")
+      .select("*")
+      .eq("room_id", room_id)
+      .eq("status", "Avaliable");
+
+    if (error) {
+      console.error("Error fetching room avaliable:", error);
+      return res
+        .status(500)
+        .json({ error: "An error occurred while fetching room avaliable." });
+    }
+    return res.json({
+      data: roomAvaliable[0],
+    });
+  } catch (error) {
+    console.log(error);
+  }
+});

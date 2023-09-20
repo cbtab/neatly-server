@@ -7,7 +7,7 @@ bookingRouter.get("/", async (req: Request, res: Response) => {
     const { data, error } = await supabase
       .from("booking")
       .select("*")
-      .order("book_id", { ascending: true });
+      .order("book_id", { ascending: false });
 
     if (error) {
       console.error("Error fetching booking:", error);
@@ -107,6 +107,7 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
       check_out,
       avaliable,
       user_id,
+      status: "Unavaliable",
     };
 
     const { error: bookingError } = await supabase
