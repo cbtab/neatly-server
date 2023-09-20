@@ -85,6 +85,7 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
       room_avaliable_id,
       three_credit_card_num,
       payment_method,
+      amount_night,
     } = req.body;
 
     const newBooking = {
@@ -101,6 +102,7 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
       room_avaliable_id,
       three_credit_card_num,
       payment_method,
+      amount_night,
       booking_date: new Date(),
     };
 
