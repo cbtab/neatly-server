@@ -71,65 +71,74 @@ bookingRouter.get("/user/:userId", async (req: Request, res: Response) => {
 bookingRouter.post("/", async (req: Request, res: Response) => {
   try {
     const {
+      room_id,
       amount_room,
       amount_stay,
       check_in,
       check_out,
-      room_id,
       user_id,
       total_price,
       standard_request,
       special_request,
       additional_request,
-      avaliable,
-      room_avaliable_id,
+      array_of_room_avaliable,
       three_credit_card_num,
       payment_method,
       amount_night,
       total_price_add_reqs,
     } = req.body;
 
-    const newBooking = {
-      amount_room,
-      amount_stay,
-      check_in,
-      check_out,
-      room_id,
-      user_id,
-      total_price,
-      standard_request,
-      special_request,
-      additional_request,
-      room_avaliable_id,
-      three_credit_card_num,
-      payment_method,
-      amount_night,
-      total_price_add_reqs,
-      booking_date: new Date(),
-    };
+    const bookingPromises = array_of_room_avaliable.map(async (room) => {
+      const newBooking = {
+        amount_room,
+        amount_stay,
+        check_in,
+        check_out,
+        room_id,
+        user_id,
+        total_price,
+        standard_request,
+        special_request,
+        additional_request,
+        room_avaliable_id: room.room_avaliable_id,
+        three_credit_card_num,
+        payment_method,
+        amount_night,
+        total_price_add_reqs,
+        booking_date: new Date(),
+      };
 
-    const newAvailability = {
-      check_in,
-      check_out,
-      avaliable: true,
-      user_id,
-      status: "Unavaliable",
-    };
+      const newAvailability = {
+        check_in,
+        check_out,
+        avaliable: true,
+        user_id,
+        status: "Unavaliable",
+      };
 
-    const { error: bookingError } = await supabase
-      .from("booking")
-      .insert([newBooking]);
+      const { error: bookingError } = await supabase
+        .from("booking")
+        .insert([newBooking]);
 
-    const { error: availabilityError } = await supabase
-      .from("room_avaliable")
-      .update([newAvailability])
-      .eq("room_avaliable_id", room_avaliable_id);
+      const { error: availabilityError } = await supabase
+        .from("room_avaliable")
+        .update([newAvailability])
+        .eq("room_avaliable_id", room.room_avaliable_id);
 
-    if (bookingError || availabilityError) {
-      console.error(
-        "Error inserting data into the database:",
-        bookingError || availabilityError
-      );
+      if (bookingError || availabilityError) {
+        console.error(
+          "Error inserting data into the database:",
+          bookingError || availabilityError
+        );
+        return { error: "Failed to insert data into the database" };
+      } else {
+        return { message: "Data inserted successfully" };
+      }
+    });
+    const bookingResults = await Promise.all(bookingPromises);
+    const hasError = bookingResults.some((result) => result.error);
+
+    if (hasError) {
       res
         .status(500)
         .json({ error: "Failed to insert data into the database" });
