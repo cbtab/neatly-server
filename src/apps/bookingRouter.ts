@@ -171,7 +171,6 @@ bookingRouter.put("/:id", async (req: Request, res: Response) => {
       standard_request,
       special_request,
       additional_request,
-      cancel_date: new Date(),
       update_booking_date: new Date(),
     };
 
@@ -211,7 +210,53 @@ bookingRouter.put("/:id", async (req: Request, res: Response) => {
     res.status(500).json({ error: "An internal server error occurred." });
   }
 });
+bookingRouter.put("/cancel/:id", async (req: Request, res: Response) => {
+  try {
+    const bookingId = req.params.id;
+    const { check_in, check_out, avaliable, room_avaliable_id } = req.body;
 
+    const updatedBooking = {
+      status: "cancel",
+      room_avaliable_id,
+      cancel_date: new Date(),
+    };
+
+    const updatedAvailability = {
+      check_in: null,
+      check_out: null,
+      user_id: null,
+      status: "Avaliable",
+    };
+
+    const { error: bookingError } = await supabase
+      .from("booking")
+      .update([updatedBooking])
+      .eq("book_id", bookingId);
+
+    const { error: availabilityError } = await supabase
+      .from("room_avaliable")
+      .update([updatedAvailability])
+      .eq("room_avaliable_id", room_avaliable_id);
+
+    if (bookingError || availabilityError) {
+      console.error(
+        "Error updating booking or availability:",
+        bookingError,
+        availabilityError
+      );
+      return res.status(500).json({
+        error: "An error occurred while updating booking or availability.",
+      });
+    }
+
+    res.status(202).json({
+      message: "Booking and availability have been updated successfully.",
+    });
+  } catch (err) {
+    console.error("Internal server error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
 bookingRouter.put("/ChangeDate/:id", async (req: Request, res: Response) => {
   try {
     const bookingId = req.params.id;
