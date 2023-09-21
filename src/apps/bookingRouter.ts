@@ -87,8 +87,18 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
       amount_night,
       total_price_add_reqs,
     } = req.body;
+    console.log(array_of_room_avaliable);
 
-    const bookingPromises = array_of_room_avaliable.map(async (room) => {
+    let roomAvaliableArray;
+
+    if (Array.isArray(array_of_room_avaliable)) {
+      roomAvaliableArray = array_of_room_avaliable;
+    } else {
+      roomAvaliableArray = [array_of_room_avaliable];
+    }
+    console.log(roomAvaliableArray);
+
+    const bookingPromises = roomAvaliableArray.map(async (room) => {
       const newBooking = {
         amount_room,
         amount_stay,
@@ -115,26 +125,87 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
         user_id,
         status: "Unavaliable",
       };
-
       const { error: bookingError } = await supabase
         .from("booking")
         .insert([newBooking]);
 
-      const { error: availabilityError } = await supabase
-        .from("room_avaliable")
-        .update([newAvailability])
-        .eq("room_avaliable_id", room.room_avaliable_id);
+      const { data: currentRoomAvailability, error: roomAvailabilityError } =
+        await supabase
+          .from("room_avaliable")
+          .select("*")
+          .eq("room_avaliable_id", room.room_avaliable_id)
+          .single();
 
-      if (bookingError || availabilityError) {
+      if (roomAvailabilityError) {
         console.error(
-          "Error inserting data into the database:",
-          bookingError || availabilityError
+          "Error fetching 'room_avaliable':",
+          roomAvailabilityError
         );
-        return { error: "Failed to insert data into the database" };
-      } else {
-        return { message: "Data inserted successfully" };
+        return { error: "Failed to fetch 'room_avaliable'" };
       }
+
+      if (newBooking.check_in < currentRoomAvailability.check_in) {
+        const { data: updatedRoom, error: updateError } = await supabase
+          .from("room_avaliable")
+          .update(newAvailability)
+          .eq("room_avaliable_id", room.room_avaliable_id);
+
+        if (updateError) {
+          console.error("Error updating 'room_avaliable':", updateError);
+          return { error: "Failed to update 'room_avaliable'" };
+        }
+
+        const updatedReserveBooking = [
+          ...currentRoomAvailability.reserve_booking,
+          currentRoomAvailability,
+        ];
+        const { data: roomAvailabilityData, error: availabilityError } =
+          await supabase
+            .from("room_avaliable")
+            .update({
+              reserve_booking: updatedReserveBooking,
+            })
+            .eq("room_avaliable_id", room.room_avaliable_id);
+
+        if (availabilityError) {
+          console.error(
+            "Error updating 'reserve_booking' in 'room_avaliable' table:",
+            availabilityError
+          );
+          return {
+            error:
+              "Failed to update 'reserve_booking' in 'room_avaliable' table",
+          };
+        }
+      } else {
+        const updatedReserveBooking = [
+          { ...currentRoomAvailability.reserve_booking, newBooking },
+        ];
+
+        console.log(currentRoomAvailability);
+        const { data: roomAvailabilityData, error: availabilityError } =
+          await supabase
+            .from("room_avaliable")
+            .update({
+              reserve_booking: updatedReserveBooking,
+            })
+            .eq("room_avaliable_id", room.room_avaliable_id);
+
+        if (availabilityError) {
+          console.error(
+            "Error updating 'reserve_booking' in 'room_avaliable' table:",
+            availabilityError
+          );
+          return {
+            error:
+              "Failed to update 'reserve_booking' in 'room_avaliable' table",
+          };
+        }
+      }
+
+      return { message: "Data inserted successfully" };
     });
+
     const bookingResults = await Promise.all(bookingPromises);
     const hasError = bookingResults.some((result) => result.error);
 
