@@ -41,8 +41,7 @@ roomAvaliable.get("/:roomId", async (req, res) => {
     const { data: roomAvaliable, error } = await supabase
       .from("room_avaliable")
       .select("*")
-      .eq("room_id", room_id)
-      .eq("status", "Avaliable");
+      .eq("room_id", room_id);
 
     if (error) {
       console.error("Error fetching room avaliable:", error);
