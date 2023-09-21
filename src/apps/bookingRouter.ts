@@ -337,10 +337,11 @@ bookingRouter.put("/cancel/:id", async (req: Request, res: Response) => {
     res.status(500).json({ error: "An internal server error occurred." });
   }
 });
+
 bookingRouter.put("/ChangeDate/:id", async (req: Request, res: Response) => {
   try {
     const bookingId = req.params.id;
-    const { check_in, check_out, room_avaliable_id } = req.body;
+    const { check_in, check_out } = req.body;
 
     const updatedBooking = {
       check_in,
@@ -348,34 +349,20 @@ bookingRouter.put("/ChangeDate/:id", async (req: Request, res: Response) => {
       update_booking_date: new Date(),
     };
 
-    const updatedAvailability = {
-      check_in,
-      check_out,
-    };
-
     const { error: bookingError } = await supabase
       .from("booking")
       .update([updatedBooking])
       .eq("book_id", bookingId);
 
-    const { error: availabilityError } = await supabase
-      .from("room_avaliable")
-      .update([updatedAvailability])
-      .eq("room_avaliable_id", room_avaliable_id);
-
-    if (bookingError || availabilityError) {
-      console.error(
-        "Error updating booking or availability:",
-        bookingError,
-        availabilityError
-      );
+    if (bookingError) {
+      console.error("Error updating booking:", bookingError);
       return res.status(500).json({
-        error: "An error occurred while updating booking or availability.",
+        error: "An error occurred while updating booking.",
       });
     }
 
     res.status(202).json({
-      message: "Booking and availability have been updated successfully.",
+      message: "Booking have been updated successfully.",
     });
   } catch (err) {
     console.error("Internal server error:", err);
@@ -407,3 +394,28 @@ bookingRouter.delete("/:id", async (req: Request, res: Response) => {
     res.status(500).json({ error: "An internal server error occurred." });
   }
 });
+
+bookingRouter.get(
+  "/avaliable/:roomAvaliableId",
+  async (req: Request, res: Response) => {
+    try {
+      const roomAvaliableId = req.params.roomAvaliableId;
+      const { data: bookingDetails, error } = await supabase
+        .from("booking")
+        .select("*")
+        .eq("room_avaliable_id", roomAvaliableId);
+
+      if (error) {
+        console.error("Error fetching booking:", error);
+        return res
+          .status(500)
+          .json({ error: "An error occurred while fetching booking." });
+      }
+
+      res.json({ data: bookingDetails });
+    } catch (err) {
+      console.error("Internal server error:", err);
+      res.status(500).json({ error: "An internal server error occurred." });
+    }
+  }
+);
