@@ -144,7 +144,10 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
         return { error: "Failed to fetch 'room_avaliable'" };
       }
 
-      if (newBooking.check_in < currentRoomAvailability.check_in) {
+      if (
+        newBooking.check_in < currentRoomAvailability.check_in ||
+        currentRoomAvailability.check_in === null
+      ) {
         const { data: updatedRoom, error: updateError } = await supabase
           .from("room_avaliable")
           .update(newAvailability)
