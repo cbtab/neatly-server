@@ -108,6 +108,7 @@ authRouter.post(
             country: req.body.country,
             idNumber: req.body.idNumber,
             profile_image: avatarUrl,
+            role: "user",
           },
         ],
         { defaultToNull: false }
