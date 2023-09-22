@@ -28,7 +28,7 @@ bookingRouter.get("/:id", async (req: Request, res: Response) => {
     const bookingId = req.params.id;
     const { data: bookingDetails, error } = await supabase
       .from("booking")
-      .select("*, room_details(*)")
+      .select("*, room_details(*), users(*)")
       .eq("book_id", bookingId)
       .single();
 
