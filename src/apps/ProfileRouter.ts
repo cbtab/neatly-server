@@ -5,7 +5,7 @@ import { supabaseUpload } from "../utils/upload.ts";
 
 export const profileRouter = Router();
 
-const multerUpload = multer({ storage: multer.memoryStorage() });
+const multerUpload = multer({ dest: "uploads/" });
 const avatarUpload = multerUpload.fields([{ name: "avatar" }]);
 
 profileRouter.get("/:id", async (req: Request, res: Response) => {

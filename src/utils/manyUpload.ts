@@ -3,32 +3,42 @@ import { v4 as uuidv4 } from "uuid";
 import { decode } from "base64-arraybuffer";
 import fs from "fs/promises";
 
-const supabaseUpload = async (files: any) => {
-  let fileUrls = "";
+const manyUpload = async (files: any) => {
+  let fileUrls = [];
 
-  for (let file of files.avatar) {
+  const uploadPromises = files.room_images.map(async (file: any) => {
     try {
       const fileData = await fs.readFile(file.path, "base64");
+
       const { data, error } = await supabase.storage
         .from("user-storage")
-        .upload("profile-pictures/" + `avatar_${uuidv4()}`, decode(fileData), {
+        .upload("room_images/" + `room_${uuidv4()}`, decode(fileData), {
           contentType: file.mimetype,
         });
+
       if (error) {
         console.error("Error uploading file:", error);
-        continue;
+        return null;
       }
 
       const fileUrl = supabase.storage
         .from("user-storage")
         .getPublicUrl(data.path);
 
-      fileUrls = fileUrl.data.publicUrl;
+      await fs.unlink(file.path);
+
+      return fileUrl.data.publicUrl;
     } catch (error) {
       console.error("Error processing file:", error);
+      return null;
     }
-  }
+  });
+
+  const uploadedUrls = await Promise.all(uploadPromises);
+
+  fileUrls = uploadedUrls.filter((url) => url !== null);
+
   return fileUrls;
 };
 
-export { supabaseUpload };
+export { manyUpload };
