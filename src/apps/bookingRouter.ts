@@ -293,6 +293,7 @@ bookingRouter.put("/:id", async (req: Request, res: Response) => {
     res.status(500).json({ error: "An internal server error occurred." });
   }
 });
+
 bookingRouter.put("/cancel/:id", async (req: Request, res: Response) => {
   try {
     const bookingId = req.params.id;
@@ -422,3 +423,24 @@ bookingRouter.get(
     }
   }
 );
+
+bookingRouter.get("/admin/admin", async (req: Request, res: Response) => {
+  try {
+    const { data, error } = await supabase
+      .from("booking")
+      .select("*")
+      .order("check_in", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching booking:", error);
+      return res
+        .status(500)
+        .json({ error: "An error occurred while fetching booking." });
+    }
+
+    res.json(data);
+  } catch (err) {
+    console.error("Internal server error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
