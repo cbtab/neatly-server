@@ -1,6 +1,11 @@
 import { supabase } from "../utils/db.ts";
 import { Router, Request, Response } from "express";
+import { manyUpload } from "../utils/manyUpload.ts";
+import multer from "multer";
 export const roomRouter = Router();
+
+const multerUpload = multer({ dest: "uploads/" });
+const upload = multerUpload.fields([{ name: "room_images" }]);
 
 roomRouter.get("/", async (req: Request, res: Response) => {
   try {
@@ -52,35 +57,42 @@ roomRouter.get("/:id", async (req: Request, res: Response) => {
   }
 });
 
-roomRouter.post("/", async (req: Request, res: Response) => {
+roomRouter.post("/", upload, async (req: Request, res: Response) => {
+  let roomiImages = [];
+
+  // @ts-ignore
+  if (req.files && req.files.room_images) {
+    //@ts-ignore
+    roomiImages = await manyUpload(req.files);
+  }
+
   try {
     const {
       room_type,
       description,
       price,
       promotion_price,
+      person,
       bed_types,
       area,
       amenity,
+      room_amount,
+      avaliable,
       room_images,
     } = req.body;
-
-    if (!room_type || !price) {
-      return res.status(400).json({
-        error:
-          "Please enter room type, description, price, bed types,amenity information.",
-      });
-    }
 
     const newRoom = {
       room_type,
       description,
       price,
       promotion_price,
+      person,
       bed_types,
       area,
       amenity,
-      room_images,
+      room_amount,
+      avaliable,
+      room_images: roomiImages,
       created_at: new Date(),
     };
 

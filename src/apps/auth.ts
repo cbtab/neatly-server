@@ -7,7 +7,7 @@ import multer from "multer";
 
 const authRouter = Router();
 
-const multerUpload = multer({ storage: multer.memoryStorage() });
+const multerUpload = multer({ dest: "uploads/" });
 const avatarUpload = multerUpload.fields([{ name: "avatar" }]);
 
 const validateRegistrationData = (req, res, next) => {
