@@ -23,6 +23,7 @@ const supabaseUpload = async (files: any) => {
         .from("user-storage")
         .getPublicUrl(data.path);
 
+      await fs.unlink(file.path);
       fileUrls = fileUrl.data.publicUrl;
     } catch (error) {
       console.error("Error processing file:", error);
