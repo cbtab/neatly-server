@@ -428,7 +428,7 @@ bookingRouter.get("/admin/admin", async (req: Request, res: Response) => {
   try {
     const { data, error } = await supabase
       .from("booking")
-      .select("*, room_details(*), users(*)")
+      .select("*, room_details(*), users(*), room_avaliable(room_avaliable_id)")
       .order("check_in", { ascending: true });
 
     if (error) {
