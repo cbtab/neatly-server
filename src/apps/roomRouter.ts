@@ -1,6 +1,7 @@
 import { supabase } from "../utils/db.ts";
 import { Router, Request, Response } from "express";
 import { manyUpload } from "../utils/manyUpload.ts";
+import { deleteImage } from "../utils/deleteImage.ts";
 import multer from "multer";
 export const roomRouter = Router();
 
@@ -94,7 +95,6 @@ roomRouter.post("/", upload, async (req: Request, res: Response) => {
       avaliable,
       room_images: roomiImages,
       created_at: new Date(),
-      room_id: 100,
     };
 
     console.log(newRoom);
@@ -115,9 +115,49 @@ roomRouter.post("/", upload, async (req: Request, res: Response) => {
   }
 });
 
-roomRouter.put("/:id", async (req: Request, res: Response) => {
+roomRouter.put("/:id", upload, async (req: Request, res: Response) => {
+  const roomId = req.params.id;
+
+  let roomiImages = [];
+
+  // // @ts-ignore
+  // if (req.files && req.files.room_images) {
+  //   //@ts-ignore
+  //   roomiImages = await manyUpload(req.files);
+  // }
+
+  // @ts-ignore
+  if (req.files && req.files.room_images) {
+    try {
+      const { data: oldImageUrl, error } = await supabase
+        .from("room_details")
+        .select("room_images")
+        .eq("room_id", roomId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching old room images:", error);
+        return res.status(500).json({
+          error: "An error occurred while fetching old room images.",
+        });
+      }
+
+      if (oldImageUrl) {
+        const oldImageUrls = oldImageUrl.room_images;
+        await deleteImage(oldImageUrls);
+      }
+
+      //@ts-ignore
+      roomiImages = await manyUpload(req.files);
+    } catch (err) {
+      console.error("Internal server error:", err);
+      return res
+        .status(500)
+        .json({ error: "An internal server error occurred." });
+    }
+  }
+
   try {
-    const roomId = req.params.id;
     const {
       room_type,
       description,
@@ -137,7 +177,7 @@ roomRouter.put("/:id", async (req: Request, res: Response) => {
       bed_types,
       area,
       amenity,
-      room_images,
+      room_images: roomiImages,
       updated_at: new Date(),
     };
 
