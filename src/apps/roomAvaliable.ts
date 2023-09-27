@@ -179,3 +179,38 @@ roomAvaliable.get("/admin/admin", async (req: Request, res: Response) => {
     res.status(500).json({ error: "An internal server error occurred." });
   }
 });
+
+roomAvaliable.put(
+  "/admin/admin/:room_avaliable_id",
+  async (req: Request, res: Response) => {
+    try {
+      const roomAvaliableId = req.params.room_avaliable_id;
+      const { room_status } = req.body;
+      // console.log(room_avaliable_id);
+
+      const roomStatus = {
+        room_status,
+      };
+
+      const { data, error } = await supabase
+        .from("room_avaliable")
+        .update(roomStatus)
+        .eq("room_avaliable_id", roomAvaliableId)
+        .select();
+
+      if (error) {
+        console.error("Error updating room status:", error);
+        return res
+          .status(500)
+          .json({ error: "An error occurred while updating room status." });
+      }
+
+      res
+        .status(200)
+        .json({ message: "Room status has been updated successfully", data });
+    } catch (err) {
+      console.error("Internal server error:", err);
+      res.status(500).json({ error: "An internal server error occurred." });
+    }
+  }
+);
