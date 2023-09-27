@@ -65,7 +65,7 @@ roomRouter.post("/", upload, async (req: Request, res: Response) => {
     //@ts-ignore
     roomiImages = await manyUpload(req.files);
   }
-
+  console.log(roomiImages);
   try {
     const {
       room_type,
@@ -84,17 +84,20 @@ roomRouter.post("/", upload, async (req: Request, res: Response) => {
     const newRoom = {
       room_type,
       description,
-      price,
-      promotion_price,
+      price: Number(price),
+      promotion_price: Number(promotion_price),
       person,
       bed_types,
-      area,
+      area: Number(area),
       amenity,
       room_amount,
       avaliable,
       room_images: roomiImages,
       created_at: new Date(),
+      room_id: 100,
     };
+
+    console.log(newRoom);
 
     const { error } = await supabase.from("room_details").insert([newRoom]);
 
