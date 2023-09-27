@@ -51,7 +51,7 @@ profileRouter.put("/:id", avatarUpload, async (req: Request, res: Response) => {
   try {
     const userId = req.params.id;
     const { fullName, email, idNumber, birthDate, country } = req.body;
-
+    // console.log(userId);
     const updatedUserProfile = {
       fullName,
       email,
