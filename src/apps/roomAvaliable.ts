@@ -3,133 +3,63 @@ import { Router, Request, Response } from "express";
 export const roomAvaliable = Router();
 
 roomAvaliable.get("/", async (req: Request, res: Response) => {
-  const { checkInDate } = req.query;
+  const { checkInDate, checkOutDate } = req.query;
 
   if (!checkInDate) {
     return res.status(400).json({ error: "Please provide check-in." });
   }
 
   try {
-    const { data, error } = await supabase
-      .from("room_avaliable")
-      .select("*")
-      .order("room_avaliable_id", { ascending: true });
+    const { data: roomAvaliableData, error: roomAvaliableError } =
+      await supabase
+        .from("room_avaliable")
+        .select("*")
+        .order("room_avaliable_id", { ascending: true });
 
-    if (error) {
-      console.error("Error fetching room avaliable:", error);
+    if (roomAvaliableError) {
+      console.error("Error fetching room avaliable:", roomAvaliableError);
       return res
         .status(500)
         .json({ error: "An error occurred while fetching room avaliable." });
     }
 
-    const availableRooms = data.filter((room) => {
-      const checkoutDate = room.check_out;
-      return new Date(checkInDate as string) > new Date(checkoutDate);
+    const userCheckInDate = new Date(checkInDate as string);
+    const userCheckOutDate = new Date(checkOutDate as string);
+
+    const availableRooms = roomAvaliableData.filter((room) => {
+      const roomCheckInDate = new Date(room.check_in);
+      const roomCheckOutDate = new Date(room.check_out);
+
+      const isCheckOutBeforeRoomCheckIn = userCheckOutDate <= roomCheckInDate;
+      const isCheckInAfterRoomCheckOut = userCheckInDate >= roomCheckOutDate;
+
+      const isOverlap =
+        !isCheckOutBeforeRoomCheckIn && !isCheckInAfterRoomCheckOut;
+
+      return !isOverlap;
     });
 
-    res.json(availableRooms);
-  } catch (err) {
-    console.error("Internal server error:", err);
-    res.status(500).json({ error: "An internal server error occurred." });
-  }
-});
+    // Filter out rooms that have overlapping reserve bookings
+    const filteredRooms = availableRooms.filter((room) => {
+      const roomReserveBookings = room.reserve_booking || [];
 
-roomAvaliable.get("/book/", async (req: Request, res: Response) => {
-  const { checkInDate, checkOutDate } = req.query;
+      // Check if there is any overlapping reserve booking
+      return roomReserveBookings.every((reserve: any) => {
+        const reserveCheckInDate = new Date(reserve.check_in);
+        const reserveCheckOutDate = new Date(reserve.check_out);
 
-  if (!checkInDate || !checkOutDate) {
-    return res
-      .status(400)
-      .json({ error: "Please provide check-in and check-out dates." });
-  }
+        const isCheckOutBeforeReserveCheckIn =
+          userCheckOutDate <= reserveCheckInDate;
+        const isCheckInAfterReserveCheckOut =
+          userCheckInDate >= reserveCheckOutDate;
 
-  try {
-    const { data, error } = await supabase
-      .from("booking")
-      .select("*")
-      .order("book_id", { ascending: true });
-
-    if (error) {
-      console.error("Error fetching room available:", error);
-      return res
-        .status(500)
-        .json({ error: "An error occurred while fetching room available." });
-    }
-
-    const queryDateIn = new Date(checkInDate as string).toISOString();
-    const queryDateOut = new Date(checkOutDate as string).toISOString();
-
-    const availableRooms = data.filter((room) => {
-      const checkinDate = new Date(room.check_in).toISOString();
-      const checkoutDate = new Date(room.check_out).toISOString();
-
-      // Check if the query date is within the booking's date range
-      const doesNotOverlap =
-        queryDateIn > checkoutDate || queryDateOut < checkinDate;
-
-      return doesNotOverlap;
+        return !(
+          !isCheckOutBeforeReserveCheckIn && !isCheckInAfterReserveCheckOut
+        );
+      });
     });
 
-    // Filter out rows where 'status' === 'cancel'
-    const availableRoomsFiltered = availableRooms.filter(
-      (room) => room.status !== "cancel"
-    );
-
-    const roomAvaliableCheck = {
-      1: 0,
-      2: 0,
-      3: 0,
-      4: 0,
-      5: 0,
-      6: 0,
-    };
-
-    const { data: available, error: availableError } = await supabase
-      .from("room_avaliable")
-      .select("*")
-      .order("room_avaliable_id", { ascending: true });
-
-    if (availableError) {
-      console.error("Error fetching room available:", availableError);
-      return res
-        .status(500)
-        .json({ error: "An error occurred while fetching room available." });
-    }
-
-    const valid = {
-      1: 5,
-      2: 4,
-      3: 4,
-      4: 6,
-      5: 5,
-      6: 2,
-    };
-
-    available.forEach((room) => {
-      const roomId = room.room_id;
-      if (roomId in roomAvaliableCheck && room.check_in === null) {
-        roomAvaliableCheck[`${roomId}`]++;
-        // Check if the count exceeds the maximum valid count
-        if (roomAvaliableCheck[`${roomId}`] > valid[`${roomId}`]) {
-          // Reset the count to the maximum valid count
-          roomAvaliableCheck[`${roomId}`] = valid[`${roomId}`];
-        }
-      }
-    });
-
-    availableRoomsFiltered.forEach((room) => {
-      const roomId = room.room_id;
-      if (roomId in roomAvaliableCheck) {
-        roomAvaliableCheck[`${roomId}`]++;
-        // Check if the count exceeds the maximum valid count
-        if (roomAvaliableCheck[`${roomId}`] > valid[`${roomId}`]) {
-          // Reset the count to the maximum valid count
-          roomAvaliableCheck[`${roomId}`] = valid[`${roomId}`];
-        }
-      }
-    });
-
-    return res.json({ data: roomAvaliableCheck });
+    res.json(filteredRooms);
   } catch (err) {
     console.error("Internal server error:", err);
     res.status(500).json({ error: "An internal server error occurred." });

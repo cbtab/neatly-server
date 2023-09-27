@@ -121,9 +121,9 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
       const newAvailability = {
         check_in,
         check_out,
-        avaliable: true,
         user_id,
         status: "Unavaliable",
+        reserve_booking: [],
       };
       const { error: bookingError } = await supabase
         .from("booking")
@@ -158,15 +158,23 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
           return { error: "Failed to update 'room_avaliable'" };
         }
 
-        const updatedReserveBooking = [
+        const curerntAvailability = {
+          check_in: currentRoomAvailability.check_in,
+          check_out: currentRoomAvailability.check_out,
+          user_id: currentRoomAvailability.user_id,
+          status: currentRoomAvailability.status,
+        };
+
+        const updatedReserveBooking1 = [
           ...currentRoomAvailability.reserve_booking,
-          currentRoomAvailability,
+          curerntAvailability,
         ];
+
         const { data: roomAvailabilityData, error: availabilityError } =
           await supabase
             .from("room_avaliable")
             .update({
-              reserve_booking: updatedReserveBooking,
+              reserve_booking: updatedReserveBooking1,
             })
             .eq("room_avaliable_id", room.room_avaliable_id);
 
@@ -181,17 +189,17 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
           };
         }
       } else {
-        const updatedReserveBooking = [
-          { ...currentRoomAvailability.reserve_booking, newBooking },
+        const updatedReserveBooking2 = [
+          ...currentRoomAvailability.reserve_booking,
+          newBooking,
         ];
-
         console.log(currentRoomAvailability);
+        console.log(newBooking);
+
         const { data: roomAvailabilityData, error: availabilityError } =
           await supabase
             .from("room_avaliable")
-            .update({
-              reserve_booking: updatedReserveBooking,
-            })
+            .update({ reserve_booking: updatedReserveBooking2 })
             .eq("room_avaliable_id", room.room_avaliable_id);
 
         if (availabilityError) {
