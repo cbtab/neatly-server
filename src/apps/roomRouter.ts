@@ -120,12 +120,6 @@ roomRouter.put("/:id", upload, async (req: Request, res: Response) => {
 
   let roomiImages = [];
 
-  // // @ts-ignore
-  // if (req.files && req.files.room_images) {
-  //   //@ts-ignore
-  //   roomiImages = await manyUpload(req.files);
-  // }
-
   // @ts-ignore
   if (req.files && req.files.room_images) {
     try {
