@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { supabase } from "../utils/db.ts";
 import { supabaseUpload } from "../utils/upload.ts";
 import multer from "multer";
+import crypto from "crypto";
 
 const authRouter = Router();
 
@@ -135,12 +136,26 @@ authRouter.post(
       });
     }
 
+    // credit card
+
+    const encryptKey = Buffer.from("00112233445566778899aabbccddeeff", "hex");
+
+    function encryptCVC(cvc, encryptKey) {
+      const iv = crypto.randomBytes(16);
+      const cipher = crypto.createCipheriv("aes-256-cbc", encryptKey, iv);
+      let encryptedCVC = cipher.update(cvc, "utf8", "hex");
+      encryptedCVC += cipher.final("hex");
+      return iv.toString("hex") + encryptedCVC;
+    }
+
+    const generatedCvc = encryptCVC(req.body.cvc, encryptKey);
+
     const { data: data, error: dataError } = await supabase
       .from("credit_card")
       .insert([
         {
           expire_date: req.body.expireDate,
-          cvc: req.body.cvc,
+          cvc: generatedCvc,
           user_id: user_id,
           card_owner: req.body.card_owner,
           card_number: req.body.card_number,
