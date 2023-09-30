@@ -204,6 +204,12 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
           return { error: "Failed to update 'room_avaliable'" };
         }
 
+        const reserveBookingArray = Array.isArray(
+          currentRoomAvailability.reserve_booking
+        )
+          ? currentRoomAvailability.reserve_booking
+          : [];
+
         const curerntAvailability = {
           check_in: currentRoomAvailability.check_in,
           check_out: currentRoomAvailability.check_out,
@@ -212,7 +218,7 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
         };
 
         const updatedReserveBooking1 = [
-          ...currentRoomAvailability.reserve_booking,
+          ...reserveBookingArray,
           curerntAvailability,
         ];
 
@@ -235,10 +241,13 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
           };
         }
       } else {
-        const updatedReserveBooking2 = [
-          ...currentRoomAvailability.reserve_booking,
-          newBooking,
-        ];
+        const reserveBookingArray = Array.isArray(
+          currentRoomAvailability.reserve_booking
+        )
+          ? currentRoomAvailability.reserve_booking
+          : [];
+
+        const updatedReserveBooking2 = [...reserveBookingArray, newBooking];
         console.log(currentRoomAvailability);
         console.log(newBooking);
 
@@ -349,50 +358,128 @@ bookingRouter.put("/:id", async (req: Request, res: Response) => {
 });
 
 bookingRouter.put("/cancel/:id", async (req: Request, res: Response) => {
-  try {
-    const bookingId = req.params.id;
-    const { check_in, check_out, avaliable, room_avaliable_id } = req.body;
+  const bookingId = req.params.id;
+  const { check_in, check_out, avaliable, room_avaliable_id, refund, user_id } =
+    req.body;
 
-    const updatedBooking = {
-      status: "cancel",
-      room_avaliable_id,
-      cancel_date: new Date(),
-    };
+  if (refund !== true) {
+    try {
+      const updatedBooking = {
+        status: "cancel",
+        room_avaliable_id,
+        cancel_date: new Date(),
+      };
 
-    const updatedAvailability = {
-      check_in: null,
-      check_out: null,
-      user_id: null,
-      status: "Avaliable",
-    };
+      const updatedAvailability = {
+        check_in: null,
+        check_out: null,
+        user_id: null,
+        status: "Avaliable",
+      };
 
-    const { error: bookingError } = await supabase
-      .from("booking")
-      .update([updatedBooking])
-      .eq("book_id", bookingId);
+      const { error: bookingError } = await supabase
+        .from("booking")
+        .update([updatedBooking])
+        .eq("book_id", bookingId);
 
-    const { error: availabilityError } = await supabase
-      .from("room_avaliable")
-      .update([updatedAvailability])
-      .eq("room_avaliable_id", room_avaliable_id);
+      const { error: availabilityError } = await supabase
+        .from("room_avaliable")
+        .update([updatedAvailability])
+        .eq("room_avaliable_id", room_avaliable_id);
 
-    if (bookingError || availabilityError) {
-      console.error(
-        "Error updating booking or availability:",
-        bookingError,
-        availabilityError
-      );
-      return res.status(500).json({
-        error: "An error occurred while updating booking or availability.",
+      if (bookingError || availabilityError) {
+        console.error(
+          "Error updating booking or availability:",
+          bookingError,
+          availabilityError
+        );
+        return res.status(500).json({
+          error: "An error occurred while updating booking or availability.",
+        });
+      }
+
+      res.status(202).json({
+        message: "Booking and availability have been updated successfully.",
       });
+    } catch (err) {
+      console.error("Internal server error:", err);
+      res.status(500).json({ error: "An internal server error occurred." });
     }
+  } else {
+    try {
+      const updatedBooking = {
+        status: "cancel",
+        room_avaliable_id,
+        cancel_date: new Date(),
+      };
 
-    res.status(202).json({
-      message: "Booking and availability have been updated successfully.",
-    });
-  } catch (err) {
-    console.error("Internal server error:", err);
-    res.status(500).json({ error: "An internal server error occurred." });
+      const updatedAvailability = {
+        check_in: null,
+        check_out: null,
+        user_id: null,
+        status: "Avaliable",
+      };
+
+      const { error: bookingError } = await supabase
+        .from("booking")
+        .update([updatedBooking])
+        .eq("book_id", bookingId);
+
+      const { error: availabilityError } = await supabase
+        .from("room_avaliable")
+        .update([updatedAvailability])
+        .eq("room_avaliable_id", room_avaliable_id);
+
+      if (bookingError || availabilityError) {
+        console.error(
+          "Error updating booking or availability:",
+          bookingError,
+          availabilityError
+        );
+        return res.status(500).json({
+          error: "An error occurred while updating booking or availability.",
+        });
+      }
+
+      let { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("notification")
+        .eq("id", user_id);
+
+      let { data: notificationCount, error: userNotiCountError } =
+        await supabase
+          .from("users")
+          .select("notification_count")
+          .eq("id", user_id);
+
+      const existingNotifications = userData[0]?.notification || [];
+      const existingNotificationCount =
+        notificationCount[0]?.notification_count || 0;
+
+      const newNotiText =
+        "We receive your refund request. You will receive an email with details and a refund within 48 hours.";
+
+      const newNoti = [...existingNotifications, newNotiText];
+
+      const newNotificationCount = existingNotificationCount + 1;
+
+      let { data: newNotiArray, error: newNotiArrayError } = await supabase
+        .from("users")
+        .update({ notification: newNoti })
+        .eq("id", user_id);
+
+      let { data: newNotiCountData, error } = await supabase
+        .from("users")
+        .update({ notification_count: newNotificationCount })
+        .eq("id", user_id);
+
+      res.status(202).json({
+        message: "Booking and availability have been updated successfully.",
+      });
+    } catch (err) {
+      console.error("Internal server error:", err);
+      res.status(500).json({ error: "An internal server error occurred." });
+    }
   }
 });
 
