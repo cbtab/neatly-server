@@ -138,7 +138,10 @@ authRouter.post(
 
     // credit card
 
-    const encryptKey = Buffer.from("00112233445566778899aabbccddeeff", "hex");
+    const encryptKey = Buffer.from(
+      "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff",
+      "hex"
+    );
 
     function encryptCVC(cvc, encryptKey) {
       const iv = crypto.randomBytes(16);
