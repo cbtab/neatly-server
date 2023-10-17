@@ -1,6 +1,9 @@
 import { supabase } from "../utils/db.ts";
 import { Router, Request, Response } from "express";
+import { Mutex } from "async-mutex";
+
 export const bookingRouter = Router();
+const roomMutex = new Mutex();
 
 bookingRouter.get("/", async (req: Request, res: Response) => {
   try {
@@ -133,6 +136,7 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
       amount_night,
       total_price_add_reqs,
     } = req.body;
+
     console.log(array_of_room_avaliable);
 
     let roomAvaliableArray;
@@ -142,134 +146,141 @@ bookingRouter.post("/", async (req: Request, res: Response) => {
     } else {
       roomAvaliableArray = [array_of_room_avaliable];
     }
-    console.log(roomAvaliableArray);
+
+    // Acquire the mutex to protect this critical section
+    const release = await roomMutex.acquire();
 
     const bookingPromises = roomAvaliableArray.map(async (room) => {
-      const newBooking = {
-        amount_room,
-        amount_stay,
-        check_in,
-        check_out,
-        room_id,
-        user_id,
-        total_price,
-        standard_request,
-        special_request,
-        additional_request,
-        room_avaliable_id: room.room_avaliable_id,
-        three_credit_card_num,
-        payment_method,
-        amount_night,
-        total_price_add_reqs,
-        booking_date: new Date(),
-      };
-
-      const newAvailability = {
-        check_in,
-        check_out,
-        user_id,
-        status: "Unavaliable",
-        reserve_booking: [],
-      };
-      const { error: bookingError } = await supabase
-        .from("booking")
-        .insert([newBooking]);
-
-      const { data: currentRoomAvailability, error: roomAvailabilityError } =
-        await supabase
-          .from("room_avaliable")
-          .select("*")
-          .eq("room_avaliable_id", room.room_avaliable_id)
-          .single();
-
-      if (roomAvailabilityError) {
-        console.error(
-          "Error fetching 'room_avaliable':",
-          roomAvailabilityError
-        );
-        return { error: "Failed to fetch 'room_avaliable'" };
-      }
-
-      if (
-        newBooking.check_in < currentRoomAvailability.check_in ||
-        currentRoomAvailability.check_in === null
-      ) {
-        const { data: updatedRoom, error: updateError } = await supabase
-          .from("room_avaliable")
-          .update(newAvailability)
-          .eq("room_avaliable_id", room.room_avaliable_id);
-
-        if (updateError) {
-          console.error("Error updating 'room_avaliable':", updateError);
-          return { error: "Failed to update 'room_avaliable'" };
-        }
-
-        const reserveBookingArray = Array.isArray(
-          currentRoomAvailability.reserve_booking
-        )
-          ? currentRoomAvailability.reserve_booking
-          : [];
-
-        const curerntAvailability = {
-          check_in: currentRoomAvailability.check_in,
-          check_out: currentRoomAvailability.check_out,
-          user_id: currentRoomAvailability.user_id,
-          status: currentRoomAvailability.status,
+      try {
+        const newBooking = {
+          amount_room,
+          amount_stay,
+          check_in,
+          check_out,
+          room_id,
+          user_id,
+          total_price,
+          standard_request,
+          special_request,
+          additional_request,
+          room_avaliable_id: room.room_avaliable_id,
+          three_credit_card_num,
+          payment_method,
+          amount_night,
+          total_price_add_reqs,
+          booking_date: new Date(),
         };
 
-        const updatedReserveBooking1 = [
-          ...reserveBookingArray,
-          curerntAvailability,
-        ];
+        const newAvailability = {
+          check_in,
+          check_out,
+          user_id,
+          status: "Unavaliable",
+          reserve_booking: [],
+        };
 
-        const { data: roomAvailabilityData, error: availabilityError } =
+        const { error: bookingError } = await supabase
+          .from("booking")
+          .insert([newBooking]);
+
+        const { data: currentRoomAvailability, error: roomAvailabilityError } =
           await supabase
             .from("room_avaliable")
-            .update({
-              reserve_booking: updatedReserveBooking1,
-            })
-            .eq("room_avaliable_id", room.room_avaliable_id);
+            .select("*")
+            .eq("room_avaliable_id", room.room_avaliable_id)
+            .single();
 
-        if (availabilityError) {
+        if (roomAvailabilityError) {
           console.error(
-            "Error updating 'reserve_booking' in 'room_avaliable' table:",
-            availabilityError
+            "Error fetching 'room_avaliable':",
+            roomAvailabilityError
           );
-          return {
-            error:
-              "Failed to update 'reserve_booking' in 'room_avaliable' table",
-          };
+          return { error: "Failed to fetch 'room_avaliable'" };
         }
-      } else {
-        const reserveBookingArray = Array.isArray(
-          currentRoomAvailability.reserve_booking
-        )
-          ? currentRoomAvailability.reserve_booking
-          : [];
 
-        const updatedReserveBooking2 = [...reserveBookingArray, newBooking];
-        console.log(currentRoomAvailability);
-        console.log(newBooking);
-
-        const { data: roomAvailabilityData, error: availabilityError } =
-          await supabase
+        if (
+          newBooking.check_in < currentRoomAvailability.check_in ||
+          currentRoomAvailability.check_in === null
+        ) {
+          const { data: updatedRoom, error: updateError } = await supabase
             .from("room_avaliable")
-            .update({ reserve_booking: updatedReserveBooking2 })
+            .update(newAvailability)
             .eq("room_avaliable_id", room.room_avaliable_id);
 
-        if (availabilityError) {
-          console.error(
-            "Error updating 'reserve_booking' in 'room_avaliable' table:",
-            availabilityError
-          );
-          return {
-            error:
-              "Failed to update 'reserve_booking' in 'room_avaliable' table",
+          if (updateError) {
+            console.error("Error updating 'room_avaliable':", updateError);
+            return { error: "Failed to update 'room_avaliable'" };
+          }
+
+          const reserveBookingArray = Array.isArray(
+            currentRoomAvailability.reserve_booking
+          )
+            ? currentRoomAvailability.reserve_booking
+            : [];
+
+          const curerntAvailability = {
+            check_in: currentRoomAvailability.check_in,
+            check_out: currentRoomAvailability.check_out,
+            user_id: currentRoomAvailability.user_id,
+            status: currentRoomAvailability.status,
           };
+
+          const updatedReserveBooking1 = [
+            ...reserveBookingArray,
+            curerntAvailability,
+          ];
+
+          const { data: roomAvailabilityData, error: availabilityError } =
+            await supabase
+              .from("room_avaliable")
+              .update({
+                reserve_booking: updatedReserveBooking1,
+              })
+              .eq("room_avaliable_id", room.room_avaliable_id);
+
+          if (availabilityError) {
+            console.error(
+              "Error updating 'reserve_booking' in 'room_avaliable' table:",
+              availabilityError
+            );
+            return {
+              error:
+                "Failed to update 'reserve_booking' in 'room_avaliable' table",
+            };
+          }
+        } else {
+          const reserveBookingArray = Array.isArray(
+            currentRoomAvailability.reserve_booking
+          )
+            ? currentRoomAvailability.reserve_booking
+            : [];
+
+          const updatedReserveBooking2 = [...reserveBookingArray, newBooking];
+          console.log(currentRoomAvailability);
+          console.log(newBooking);
+
+          const { data: roomAvailabilityData, error: availabilityError } =
+            await supabase
+              .from("room_avaliable")
+              .update({ reserve_booking: updatedReserveBooking2 })
+              .eq("room_avaliable_id", room.room_avaliable_id);
+
+          if (availabilityError) {
+            console.error(
+              "Error updating 'reserve_booking' in 'room_avaliable' table:",
+              availabilityError
+            );
+            return {
+              error:
+                "Failed to update 'reserve_booking' in 'room_avaliable' table",
+            };
+          }
         }
+
+        return { message: "Data inserted successfully" };
+      } finally {
+        release();
       }
-
-      return { message: "Data inserted successfully" };
     });
 
     const bookingResults = await Promise.all(bookingPromises);

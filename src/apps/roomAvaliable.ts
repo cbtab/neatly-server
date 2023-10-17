@@ -110,6 +110,20 @@ roomAvaliable.get("/admin/admin", async (req: Request, res: Response) => {
   }
 });
 
+roomAvaliable.put("/update/:room_avaliable_id", async (req, res) => {
+  const roomId = req.params.room_avaliable_id;
+  const process_status = req.body;
+  try {
+    const { data, error } = await supabase
+      .from("room_avaliable")
+      .update(process_status)
+      .eq("room_avaliable_id", roomId)
+      .select();
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 roomAvaliable.put(
   "/admin/admin/:room_avaliable_id",
   async (req: Request, res: Response) => {
